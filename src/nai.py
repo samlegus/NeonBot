@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-NOVELAI_API_KEY = "pst-3rffALajjEH0JH8iBr8EvLuAcPR1UunWR7kjGki4dYH0hlEpDHTueiDMuc7PhLRK" # Or use os.getenv("NOVELAI_CURRENT_API_KEY") 
+NOVELAI_API_KEY = os.getenv("NOVELAI_CURRENT_API_KEY")
+if not NOVELAI_API_KEY:
+    raise RuntimeError("NOVELAI_CURRENT_API_KEY is not set")
 NOVELAI_API_URL = "https://image.novelai.net/ai/generate-image"
 
 name = "img" #optional finename to be overriden

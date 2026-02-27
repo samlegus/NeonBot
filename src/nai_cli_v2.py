@@ -187,6 +187,7 @@ def main():
         redacted = redact_payload_for_debug(payload_preview)
         print("Payload preview (redacted):")
         print(json.dumps(redacted, indent=2, ensure_ascii=True))
+        return
 
     print(f"Starting generation with prompt: {nai.prompt[:50]}...")
     
