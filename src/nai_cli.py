@@ -1,10 +1,86 @@
 import argparse
 import sys
 import os
+import re
+import json
 
 # Import the existing novelai module
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import nai
+
+def parse_precise_ref(ref_str):
+    """Parse precise ref safely on Windows.
+    Preferred format: filepath,type,strength,fidelity
+    Back-compat format: filepath:type:strength:fidelity (non-Windows paths only)
+    """
+    if "," in ref_str:
+        parts = [p.strip() for p in ref_str.split(",", 3)]
+    else:
+        # Preserve drive letter for paths like C:\...
+        windows_drive = re.match(r"^[A-Za-z]:[\\/]", ref_str)
+        if windows_drive:
+            drive = ref_str[:2]
+            rest = ref_str[2:]
+            rest_parts = re.split(r"[:,]", rest, maxsplit=3)
+            parts = [drive + rest_parts[0]] + [p.strip() for p in rest_parts[1:]]
+        else:
+            parts = re.split(r"[:,]", ref_str, maxsplit=3)
+            parts = [p.strip() for p in parts]
+
+    filepath = parts[0] if parts and parts[0] else ""
+    ref_type = "character"
+    strength = 0.6
+    fidelity = 1.0
+
+    if len(parts) > 1 and parts[1]:
+        ref_type = parts[1].lower()
+    if len(parts) > 2 and parts[2]:
+        try:
+            strength = float(parts[2])
+        except ValueError:
+            pass
+    if len(parts) > 3 and parts[3]:
+        try:
+            fidelity = float(parts[3])
+        except ValueError:
+            pass
+
+    return {
+        "image_path": filepath,
+        "type": ref_type,
+        "strength": strength,
+        "fidelity": fidelity
+    }
+
+def normalize_precise_refs(raw_refs):
+    """Parse and filter precise refs, dropping empty placeholders."""
+    parsed = []
+    for ref_str in raw_refs or []:
+        ref = parse_precise_ref(ref_str)
+        if ref["image_path"]:
+            parsed.append(ref)
+    return parsed
+
+def redact_payload_for_debug(payload):
+    """Redact large image/base64 fields for readable debug output."""
+    def scrub(key, value):
+        if isinstance(value, dict):
+            return {k: scrub(k, v) for k, v in value.items()}
+        if isinstance(value, list):
+            if "image" in key.lower():
+                redacted = []
+                for item in value:
+                    if isinstance(item, str):
+                        redacted.append(f"<redacted:{len(item)} chars>")
+                    else:
+                        redacted.append(item)
+                return redacted
+            return [scrub(key, item) for item in value]
+        if isinstance(value, str) and "image" in key.lower() and len(value) > 80:
+            return f"<redacted:{len(value)} chars>"
+        return value
+
+    return scrub("root", payload)
 
 def main():
     parser = argparse.ArgumentParser(description="NovelAI Image Generation CLI")
@@ -30,18 +106,30 @@ def main():
     parser.add_argument("--vibe-image", type=str, help="Path to the reference image for Vibe Transfer.")
     parser.add_argument("--vibe-strength", type=float, help="How much the vibe image influences the output.")
     parser.add_argument("--vibe-fidelity", type=float, help="Information extracted / Fidelity of the vibe transfer.")
+    parser.add_argument("--debug-payload", action="store_true", help="Print redacted final payload before API request.")
     
     # Precise Reference Arguments (Grouped string approach)
     parser.add_argument(
         "--precise-ref", 
         action="append", 
-        help="Precise reference in format 'filepath:type:strength:fidelity' (e.g., 'image.png:character:0.8:1.0'). Can be used multiple times."
+        help="Precise reference. Preferred: 'filepath,type,strength,fidelity'. Legacy: 'filepath:type:strength:fidelity'. Can be used multiple times."
     )
     # Upscale Arguments (Currently unused / 404 endpoint)
     # parser.add_argument("--upscale", type=str, help="Path to an image to upscale. Skips generation.")
     # parser.add_argument("--upscale-factor", type=int, choices=[2, 4], default=2, help="Upscale factor (2 or 4). Default is 2.")
     
     args = parser.parse_args()
+
+    parsed_precise_refs = normalize_precise_refs(args.precise_ref)
+    i2i_mode = args.i2i_image is not None
+    vibe_mode = args.vibe_image is not None
+    precise_mode = len(parsed_precise_refs) > 0
+
+    # Current compatibility rule:
+    # - vibe + precise is invalid
+    # - i2i can be combined with either vibe or precise
+    if vibe_mode and precise_mode:
+        parser.error("Invalid combination: vibe (--vibe-image) and precise (--precise-ref) cannot be used together.")
     
     # Override novelai.py globals with any provided CLI arguments
     if args.prompt is not None:
@@ -64,6 +152,10 @@ def main():
         nai.height = args.height
     if args.samples is not None:
         nai.n_samples = args.samples
+
+    # Default to no precise references unless explicitly provided via CLI.
+    # This avoids implicit mode mixing from nai.py defaults.
+    nai.precise_references = []
         
     # i2i overrides
     if args.i2i_image is not None:
@@ -82,47 +174,28 @@ def main():
         nai.vibe_transfer_information_extracted = args.vibe_fidelity
         
     # Precise reference parsing
-    if args.precise_ref is not None:
-        nai.precise_references = [] # Clear defaults if CLI provides them
-        import re
-        for ref_str in args.precise_ref:
-            parts = re.split(r'[:,]', ref_str)
-            filepath = parts[0]
-            
-            ref_type = "character"
-            if len(parts) > 1 and parts[1].strip():
-                ref_type = parts[1].strip().lower()
-                
-            strength = 0.6
-            if len(parts) > 2 and parts[2].strip():
-                try:
-                    strength = float(parts[2].strip())
-                except ValueError:
-                    pass
-                    
-            fidelity = 1.0
-            if len(parts) > 3 and parts[3].strip():
-                try:
-                    fidelity = float(parts[3].strip())
-                except ValueError:
-                    pass
-            
-            nai.precise_references.append({
-                "image_path": filepath,
-                "type": ref_type,
-                "strength": strength,
-                "fidelity": fidelity
-            })
+    if precise_mode:
+        nai.precise_references = parsed_precise_refs
 
     # If upscaling, do that and skip generation
     # if args.upscale:
     #    nai.run_upscale(args.upscale, args.upscale_factor)
     #    return
 
+    if args.debug_payload:
+        payload_preview = nai.construct_payload()
+        redacted = redact_payload_for_debug(payload_preview)
+        print("Payload preview (redacted):")
+        print(json.dumps(redacted, indent=2, ensure_ascii=True))
+        return
+
     print(f"Starting generation with prompt: {nai.prompt[:50]}...")
-    
-    # Run the core generation logic
-    nai.run_gui_emulation()
+
+    try:
+        nai.run_gui_emulation()
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(1)
 
 if __name__ == "__main__":
     main()

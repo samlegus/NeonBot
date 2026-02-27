@@ -100,7 +100,7 @@ def build_argv(payload):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run nai_cli_v2.py from JSON payload")
+    parser = argparse.ArgumentParser(description="Run nai_cli.py from JSON payload")
     parser.add_argument("--json", type=str, help="Inline JSON payload")
     parser.add_argument("--json-file", type=str, help="Path to JSON payload file")
     parser.add_argument(
@@ -108,16 +108,27 @@ def main():
     )
     args = parser.parse_args()
 
-    payload = load_payload(args)
-    cli_args = build_argv(payload)
+    try:
+        payload = load_payload(args)
+        cli_args = build_argv(payload)
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: invalid JSON payload: {exc}", file=sys.stderr)
+        raise SystemExit(2)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(2)
 
-    cmd = [sys.executable, str(Path(__file__).with_name("nai_cli_v2.py")), *cli_args]
+    cmd = [sys.executable, str(Path(__file__).with_name("nai_cli.py")), *cli_args]
 
     if args.dry_run:
         print(" ".join(f'"{p}"' if " " in p else p for p in cmd))
         return
 
-    proc = subprocess.run(cmd)
+    try:
+        proc = subprocess.run(cmd)
+    except OSError as exc:
+        print(f"ERROR: failed to execute nai_cli.py: {exc}", file=sys.stderr)
+        raise SystemExit(1)
     raise SystemExit(proc.returncode)
 
 

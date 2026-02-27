@@ -1,6 +1,6 @@
 # Mini App Payload Contract
 
-`run_nai_job.py` accepts either:
+`nai_job.py` accepts either:
 - `--json '<payload>'`
 - `--json-file <path>`
 

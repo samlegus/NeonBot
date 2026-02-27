@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 import json
 import base64
@@ -197,10 +198,14 @@ def run_gui_emulation():
     }
 
     print("Sending generation request to NovelAI API...")
-    response = requests.post(NOVELAI_API_URL, headers=headers, json=payload)
+    try:
+        response = requests.post(NOVELAI_API_URL, headers=headers, json=payload, timeout=180)
+    except requests.RequestException as exc:
+        raise RuntimeError(f"NovelAI request failed: {exc}") from exc
 
     if response.status_code == 200:
         print("Success! Unpacking zip file...")
+        saved_paths = []
         with zipfile.ZipFile(BytesIO(response.content)) as z:
             for idx, filename in enumerate(z.namelist()):
                 # Find the next available filename so we never overwrite existing outputs
@@ -213,8 +218,13 @@ def run_gui_emulation():
                 with open(output_path, "wb") as f:
                     f.write(z.read(filename))
                 print(f"-> Saved: {output_path}")
+                saved_paths.append(output_path)
+        return saved_paths
     else:
-        print(f"Error {response.status_code}: {response.text}")
+        detail = response.text.strip()
+        if len(detail) > 400:
+            detail = detail[:400] + "..."
+        raise RuntimeError(f"NovelAI API returned {response.status_code}: {detail}")
 
 def run_upscale(image_filepath, scale_factor=2):
     print(f"Preparing upscale payload for {image_filepath} at {scale_factor}x...")
@@ -265,4 +275,8 @@ def run_upscale(image_filepath, scale_factor=2):
         print(f"Error {response.status_code}: {response.text}")
 
 if __name__ == "__main__":
-    run_gui_emulation()
+    try:
+        run_gui_emulation()
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(1)
