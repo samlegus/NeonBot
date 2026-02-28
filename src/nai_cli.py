@@ -86,6 +86,7 @@ def main():
     parser = argparse.ArgumentParser(description="NovelAI Image Generation CLI")
     
     # Core Generation Arguments
+    parser.add_argument("--name", type=str, help="Base filename for saved output images.")
     parser.add_argument("-p", "--prompt", type=str, help="The positive text prompt to generate.")
     parser.add_argument("-n", "--negative-prompt", type=str, help="The negative prompt (undesired content).")
     parser.add_argument("-m", "--model", type=str, help="The model to use for generation (e.g., nai-diffusion-4-5-full).")
@@ -96,6 +97,39 @@ def main():
     parser.add_argument("-W", "--width", type=int, help="Width of the generated image.")
     parser.add_argument("-H", "--height", type=int, help="Height of the generated image.")
     parser.add_argument("--samples", type=int, help="Number of images to generate.")
+    parser.add_argument(
+        "--character-prompt",
+        action="append",
+        help="Extra character prompt fragment to append. Can be used multiple times.",
+    )
+    parser.add_argument(
+        "--quality-tags",
+        dest="quality_tags_enabled",
+        action="store_true",
+        help="Enable quality tags behavior from nai.py globals.",
+    )
+    parser.add_argument(
+        "--no-quality-tags",
+        dest="quality_tags_enabled",
+        action="store_false",
+        help="Disable quality tags behavior from nai.py globals.",
+    )
+    parser.add_argument(
+        "--uc-preset",
+        dest="uc_preset_enabled",
+        action="store_true",
+        help="Enable GUI-style ucPreset behavior.",
+    )
+    parser.add_argument(
+        "--no-uc-preset",
+        dest="uc_preset_enabled",
+        action="store_false",
+        help="Disable GUI-style ucPreset behavior.",
+    )
+    parser.set_defaults(
+        quality_tags_enabled=None,
+        uc_preset_enabled=None,
+    )
     
     # Image-to-Image (i2i) Arguments
     parser.add_argument("--i2i-image", type=str, help="Path to the base image for Image-to-Image.")
@@ -132,6 +166,8 @@ def main():
         parser.error("Invalid combination: vibe (--vibe-image) and precise (--precise-ref) cannot be used together.")
     
     # Override novelai.py globals with any provided CLI arguments
+    if args.name is not None:
+        nai.name = args.name
     if args.prompt is not None:
         nai.prompt = args.prompt
     if args.negative_prompt is not None:
@@ -152,6 +188,12 @@ def main():
         nai.height = args.height
     if args.samples is not None:
         nai.n_samples = args.samples
+    if args.character_prompt is not None:
+        nai.character_prompts = args.character_prompt
+    if args.quality_tags_enabled is not None:
+        nai.quality_tags_enabled = args.quality_tags_enabled
+    if args.uc_preset_enabled is not None:
+        nai.uc_preset_enabled = args.uc_preset_enabled
 
     # Default to no precise references unless explicitly provided via CLI.
     # This avoids implicit mode mixing from nai.py defaults.
