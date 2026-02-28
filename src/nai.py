@@ -282,10 +282,11 @@ def construct_payload():
             print(f"  Preparing reference: {ref.get('image_path')}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
             reference_strength = ref.get("strength", 0.6)
-            reference_fidelity = ref.get("fidelity", 1.0)
             director_image = build_director_reference_image(ref.get("image_path"))
             if director_image:
-                ref_info_extracted.append(reference_fidelity)
+                # Current API validation requires literal 1.0 for each director
+                # reference entry, regardless of the GUI's displayed fidelity.
+                ref_info_extracted.append(1.0)
                 ref_strengths.append(reference_strength)
                 director_reference_descriptions.append(
                     {
