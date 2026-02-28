@@ -253,6 +253,67 @@ def export_director_reference_debug(parameters):
         json.dump(manifest, handle, indent=2, ensure_ascii=True)
     print(f"Director reference debug written: {debug_path}")
 
+
+def normalize_payload_for_diff(payload):
+    """Collapse unstable/huge fields into diff-friendly summaries."""
+    payload_copy = json.loads(json.dumps(payload))
+    payload_copy.pop("recaptcha_token", None)
+    payload_copy.pop("use_new_shared_trial", None)
+
+    parameters = payload_copy.get("parameters", {})
+
+    director_refs = parameters.get("director_reference_images_cached", [])
+    normalized_director_refs = []
+    for ref in director_refs:
+        data = ref.get("data", "")
+        data_bytes = base64.b64decode(data) if data else b""
+        normalized_director_refs.append(
+            {
+                "cache_secret_key": ref.get("cache_secret_key"),
+                "data_base64_chars": len(data),
+                "data_sha256_png": hashlib.sha256(data_bytes).hexdigest() if data_bytes else None,
+                "data_sha256_b64txt": hashlib.sha256(data.encode("utf-8")).hexdigest() if data else None,
+                "data_head_b64": data[:64],
+            }
+        )
+    if director_refs:
+        parameters["director_reference_images_cached"] = normalized_director_refs
+
+    if "image" in parameters and isinstance(parameters["image"], str):
+        image_b64 = parameters["image"]
+        image_bytes = base64.b64decode(image_b64)
+        parameters["image"] = {
+            "base64_chars": len(image_b64),
+            "sha256_png": hashlib.sha256(image_bytes).hexdigest(),
+            "head_b64": image_b64[:64],
+        }
+
+    if "reference_image" in parameters and isinstance(parameters["reference_image"], str):
+        ref_b64 = parameters["reference_image"]
+        ref_bytes = base64.b64decode(ref_b64)
+        parameters["reference_image"] = {
+            "base64_chars": len(ref_b64),
+            "sha256_bytes": hashlib.sha256(ref_bytes).hexdigest(),
+            "head_b64": ref_b64[:64],
+        }
+
+    return payload_copy
+
+
+def export_payload_debug(payload):
+    """Write raw and normalized payload JSON for side-by-side GUI diffing."""
+    os.makedirs("output", exist_ok=True)
+    raw_path = os.path.join("output", "script_payload.json")
+    normalized_path = os.path.join("output", "script_payload_normalized.json")
+
+    with open(raw_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, ensure_ascii=True)
+    with open(normalized_path, "w", encoding="utf-8") as handle:
+        json.dump(normalize_payload_for_diff(payload), handle, indent=2, ensure_ascii=True, sort_keys=True)
+
+    print(f"Payload debug written: {raw_path}")
+    print(f"Payload debug written: {normalized_path}")
+
 def construct_payload():
     """Builds the JSON payload imitating the NovelAI frontend logic."""
     import random
@@ -387,6 +448,7 @@ def run_gui_emulation():
     print("Preparing payload...")
     print_reference_debug_summary()
     payload = construct_payload()
+    export_payload_debug(payload)
     export_director_reference_debug(payload["parameters"])
     print("Full payload:")
     print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
