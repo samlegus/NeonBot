@@ -147,6 +147,24 @@ def encode_reference_image(filepath, model, information_extracted=1.0):
     print(f"  [warn] encode-vibe failed ({r.status_code}) for {filepath}: {r.text[:100]}")
     return None
 
+
+def normalize_reference_type(reference_type):
+    """Map user-friendly precise types to the frontend strings."""
+    value = str(reference_type or "character").strip().lower()
+    if value in {"character", "style", "character&style"}:
+        return value
+    if value in {"both", "character_style", "character+style"}:
+        return "character&style"
+    print(f"  [warn] unknown precise reference type {reference_type!r}; defaulting to 'character'")
+    return "character"
+
+
+def compute_secondary_strength(reference_type, strength):
+    """Mirror the frontend's secondary strength mapping for precise refs."""
+    if reference_type == "style":
+        return strength * 0.5
+    return 1.0 - strength
+
 def construct_payload():
     """Builds the JSON payload imitating the NovelAI frontend logic."""
     import random
@@ -160,6 +178,7 @@ def construct_payload():
         final_prompt += ", " + ", ".join(character_prompts)
         
     parameters = {
+        "params_version": 3,
         "width": width,
         "height": height,
         "scale": guidance,
@@ -168,8 +187,22 @@ def construct_payload():
         "n_samples": n_samples,
         "ucPreset": 0 if uc_preset_enabled else 1, # Depending on API rules, 0 or 1 maps to presets
         "qualityToggle": quality_tags_enabled,
+        "autoSmea": False,
+        "dynamic_thresholding": False,
+        "controlnet_strength": 1,
+        "legacy": False,
+        "add_original_image": True,
+        "cfg_rescale": 0,
+        "noise_schedule": "karras",
+        "legacy_v3_extend": False,
+        "skip_cfg_above_sigma": None,
+        "use_coords": False,
         "seed": final_seed,
+        "characterPrompts": [],
         "negative_prompt": negative_prompt,
+        "deliberate_euler_ancestral_bug": False,
+        "prefer_brownian": True,
+        "image_format": "png",
     }
 
     if "nai-diffusion-4" in model_name:
@@ -185,8 +218,10 @@ def construct_payload():
             "caption": {
                 "base_caption": negative_prompt,
                 "char_captions": []
-            }
+            },
+            "legacy_uc": False
         }
+        parameters["legacy_uc"] = False
 
     payload = {
         "input": final_prompt,
@@ -225,18 +260,41 @@ def construct_payload():
         ref_images = []
         ref_info_extracted = []
         ref_strengths = []
+        director_reference_descriptions = []
+        director_reference_secondary_strengths = []
         for ref in precise_references:
             print(f"  Encoding reference: {ref.get('image_path')}...")
-            encoded = encode_reference_image(ref.get("image_path"), model_name, ref.get("fidelity", 1.0))
+            reference_type = normalize_reference_type(ref.get("type", "character"))
+            reference_strength = ref.get("strength", 0.6)
+            reference_fidelity = ref.get("fidelity", 1.0)
+            encoded = encode_reference_image(ref.get("image_path"), model_name, reference_fidelity)
             if encoded:
                 ref_images.append(encoded)
-                ref_info_extracted.append(ref.get("fidelity", 1.0))
-                ref_strengths.append(ref.get("strength", 0.6))
+                ref_info_extracted.append(reference_fidelity)
+                ref_strengths.append(reference_strength)
+                director_reference_descriptions.append(
+                    {
+                        "caption": {
+                            "base_caption": reference_type,
+                            "char_captions": []
+                        },
+                        "legacy_uc": False
+                    }
+                )
+                director_reference_secondary_strengths.append(
+                    compute_secondary_strength(reference_type, reference_strength)
+                )
         if ref_images:
+            # Keep the encoded-image arrays as the transport for the actual
+            # reference image while adding the frontend's director metadata.
             parameters["reference_image_multiple"] = ref_images
             parameters["reference_information_extracted_multiple"] = ref_info_extracted
             parameters["reference_strength_multiple"] = ref_strengths
             parameters["normalize_reference_strength_multiple"] = True
+            parameters["director_reference_descriptions"] = director_reference_descriptions
+            parameters["director_reference_information_extracted"] = ref_info_extracted
+            parameters["director_reference_strength_values"] = ref_strengths
+            parameters["director_reference_secondary_strength_values"] = director_reference_secondary_strengths
 
     return payload
 
