@@ -48,7 +48,7 @@ seed = 0
 sampler = "k_euler_ancestral"
 width = 832
 height = 1216
-n_samples = 4
+n_samples = 1
 
 
 

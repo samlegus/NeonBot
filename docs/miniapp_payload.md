@@ -7,6 +7,8 @@
 ## Core fields
 
 All fields are optional unless required by mode.
+`seed: 0` means random seed selection.
+Omit `samples` to use the project default of `1`.
 
 ```json
 {
@@ -14,7 +16,7 @@ All fields are optional unless required by mode.
   "prompt": "string",
   "negative_prompt": "string",
   "model": "nai-diffusion-4-5-full",
-  "seed": 12345,
+  "seed": 0,
   "steps": 28,
   "scale": 5.0,
   "sampler": "k_euler_ancestral",
