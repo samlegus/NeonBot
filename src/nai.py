@@ -37,7 +37,7 @@ vibe_transfer_strength = 0.5
 precise_references = [
     {
         "image_path": "input/johnny.png",
-        "type": "character",       
+        "type": "style",       
         "strength": .6,  # how "hard"?
         "fidelity": .8   # how much detail?
     }

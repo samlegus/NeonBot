@@ -1,0 +1,75 @@
+{
+    "input": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+    "model": "nai-diffusion-4-5-full",
+    "action": "generate",
+    "parameters": {
+        "params_version": 3,
+        "width": 832,
+        "height": 1216,
+        "scale": 5,
+        "sampler": "k_euler_ancestral",
+        "steps": 28,
+        "n_samples": 1,
+        "ucPreset": 4,
+        "qualityToggle": false,
+        "autoSmea": false,
+        "dynamic_thresholding": false,
+        "controlnet_strength": 1,
+        "legacy": false,
+        "add_original_image": true,
+        "cfg_rescale": 0,
+        "noise_schedule": "karras",
+        "legacy_v3_extend": false,
+        "skip_cfg_above_sigma": null,
+        "use_coords": false,
+        "normalize_reference_strength_multiple": true,
+        "inpaintImg2ImgStrength": 1,
+        "v4_prompt": {
+            "caption": {
+                "base_caption": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+                "char_captions": []
+            },
+            "use_coords": false,
+            "use_order": true
+        },
+        "v4_negative_prompt": {
+            "caption": {
+                "base_caption": "female, boobs, breasts",
+                "char_captions": []
+            },
+            "legacy_uc": false
+        },
+        "legacy_uc": false,
+        "seed": 666,
+        "characterPrompts": [],
+        "director_reference_descriptions": [
+            {
+                "caption": {
+                    "base_caption": "style",
+                    "char_captions": []
+                },
+                "legacy_uc": false
+            }
+        ],
+        "director_reference_information_extracted": [
+            1
+        ],
+        "director_reference_strength_values": [
+            0.6
+        ],
+        "director_reference_secondary_strength_values": [
+            0.19999999999999996
+        ],
+        "negative_prompt": "female, boobs, breasts",
+        "deliberate_euler_ancestral_bug": false,
+        "prefer_brownian": true,
+        "image_format": "png",
+        "director_reference_images_cached": [
+            {
+                "cache_secret_key": "3bebeefa10e9d720e9ee22cafd5548697d5cded5d8bb750d0e14b8ce2ae8881d"
+            }
+        ]
+    },
+    "use_new_shared_trial": true,
+    "recaptcha_token": "<redcated>"
+}
