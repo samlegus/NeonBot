@@ -18,7 +18,7 @@ name = "img" #optional finename to be overriden
 model_name = "nai-diffusion-4-5-full"
 prompt = "an orange haired catboy winking at the viewer, looking at viewer, wink, playful" 
 quality_tags_enabled = True
-negative_prompt = "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit" 
+negative_prompt = "female, boobs, breasts" 
 uc_preset_enabled = True
 character_prompts = [] 
 
@@ -36,7 +36,7 @@ vibe_transfer_strength = 0.5
 precise_references = [
     {
         "image_path": "input/johnny.jpg",
-        "type": "style",       
+        "type": "character",       
         "strength": .6,  # how "hard"?
         "fidelity": .8   # how much detail?
     }
