@@ -185,7 +185,7 @@ def compute_secondary_strength(reference_type, strength, fidelity):
         return 1.0 - fidelity
     if reference_type == "style":
         return 1.0 - fidelity
-    return 1.0 - strength
+    return 1.0 - fidelity
 
 
 def build_director_reference_image(filepath):
