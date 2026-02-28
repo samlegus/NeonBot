@@ -16,7 +16,7 @@ NOVELAI_API_URL = "https://image.novelai.net/ai/generate-image"
 
 name = "img" #optional finename to be overriden
 model_name = "nai-diffusion-4-5-full"
-prompt = "An emo shota snow leopard male with dark purple hair on his knees with a suggestive expression. tease, femboy, snow leopard, cyberpunk" 
+prompt = "an orange haired catboy winking at the viewer, looking at viewer, wink, playful" 
 quality_tags_enabled = True
 negative_prompt = "lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit" 
 uc_preset_enabled = True
@@ -35,10 +35,10 @@ vibe_transfer_strength = 0.5
 #https://docs.novelai.net/en/image/precisereference
 precise_references = [
     {
-        "image_path": "input/ceru.jpg",
+        "image_path": "input/johnny.jpg",
         "type": "style",       
-        "strength": .9,  # how "hard"?
-        "fidelity": .9   # how much detail?
+        "strength": .6,  # how "hard"?
+        "fidelity": .8   # how much detail?
     }
 ]
 
