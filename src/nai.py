@@ -179,8 +179,10 @@ def normalize_reference_type(reference_type):
     return "character"
 
 
-def compute_secondary_strength(reference_type, strength):
+def compute_secondary_strength(reference_type, strength, fidelity):
     """Mirror the frontend's secondary strength mapping for precise refs."""
+    if reference_type == "character":
+        return 1.0 - fidelity
     if reference_type == "style":
         return strength * 0.5
     return 1.0 - strength
@@ -413,6 +415,7 @@ def construct_payload():
             print(f"  Preparing reference: {ref.get('image_path')}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
             reference_strength = ref.get("strength", 0.6)
+            reference_fidelity = ref.get("fidelity", 1.0)
             director_image = build_director_reference_image(ref.get("image_path"))
             if director_image:
                 # Current API validation requires literal 1.0 for each director
@@ -429,7 +432,7 @@ def construct_payload():
                     }
                 )
                 director_reference_secondary_strengths.append(
-                    compute_secondary_strength(reference_type, reference_strength)
+                    compute_secondary_strength(reference_type, reference_strength, reference_fidelity)
                 )
                 director_reference_images_cached.append(director_image)
         if director_reference_images_cached:
