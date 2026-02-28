@@ -190,13 +190,29 @@ def compute_secondary_strength(reference_type, strength):
 
 def build_director_reference_image(filepath):
     """Build the GUI-style inline cached image object for precise refs."""
-    png_b64 = image_to_base64(filepath, force_png=True)
-    if not png_b64:
+    if not filepath or not os.path.exists(filepath):
         return None
+    from PIL import Image, ImageOps
+
+    with Image.open(filepath) as img:
+        rgba = img.convert("RGBA")
+        target_size = (1472, 1472)
+        contained = ImageOps.contain(rgba, target_size, Image.Resampling.LANCZOS)
+        canvas = Image.new("RGBA", target_size, (0, 0, 0, 255))
+        offset = (
+            (target_size[0] - contained.width) // 2,
+            (target_size[1] - contained.height) // 2,
+        )
+        canvas.paste(contained, offset)
+        buf = BytesIO()
+        canvas.save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+
+    png_b64 = base64.b64encode(png_bytes).decode("utf-8")
     # The GUI sends both a cache_secret_key and inline PNG data. The key does
     # not appear to be a simple SHA-256 of either the PNG bytes or the base64
     # text, but a stable content-derived key is still the safest client value.
-    cache_secret_key = hashlib.sha256(base64.b64decode(png_b64)).hexdigest()
+    cache_secret_key = hashlib.sha256(png_bytes).hexdigest()
     return {
         "cache_secret_key": cache_secret_key,
         "data": png_b64,
