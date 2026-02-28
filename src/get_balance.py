@@ -12,6 +12,16 @@ USER_DATA_URL = "https://api.novelai.net/user/data"
 
 def extract_balance(data):
     """Return the derived Anlas/training-step balance from /user/data."""
+    # Maintenance note:
+    # The source of truth for this script is the live official NovelAI response
+    # from GET https://api.novelai.net/user/data, not any third-party repo.
+    # We originally found this endpoint via ComfyUI_NAIDGenerator, but the
+    # actual parser here was validated against a real response from this
+    # account, where the GUI balance matched:
+    #   fixedTrainingStepsLeft + purchasedTrainingSteps
+    # If this script breaks in the future, inspect the current /user/data
+    # response shape first and update this extractor to match the official
+    # response, rather than treating any external project as authoritative.
     subscription = data.get("subscription")
     if not isinstance(subscription, dict):
         raise ValueError("response is missing 'subscription'")
