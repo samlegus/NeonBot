@@ -1,0 +1,76 @@
+{
+    "input": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+    "model": "nai-diffusion-4-5-full",
+    "action": "generate",
+    "parameters": {
+        "params_version": 3,
+        "width": 832,
+        "height": 1216,
+        "scale": 5,
+        "sampler": "k_euler_ancestral",
+        "steps": 28,
+        "n_samples": 1,
+        "ucPreset": 4,
+        "qualityToggle": false,
+        "autoSmea": false,
+        "dynamic_thresholding": false,
+        "controlnet_strength": 1,
+        "legacy": false,
+        "add_original_image": true,
+        "cfg_rescale": 0,
+        "noise_schedule": "karras",
+        "legacy_v3_extend": false,
+        "skip_cfg_above_sigma": null,
+        "use_coords": false,
+        "normalize_reference_strength_multiple": true,
+        "inpaintImg2ImgStrength": 1,
+        "v4_prompt": {
+            "caption": {
+                "base_caption": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+                "char_captions": []
+            },
+            "use_coords": false,
+            "use_order": true
+        },
+        "v4_negative_prompt": {
+            "caption": {
+                "base_caption": "female, boobs, breasts",
+                "char_captions": []
+            },
+            "legacy_uc": false
+        },
+        "legacy_uc": false,
+        "seed": 666,
+        "characterPrompts": [],
+        "director_reference_descriptions": [
+            {
+                "caption": {
+                    "base_caption": "character&style",
+                    "char_captions": []
+                },
+                "legacy_uc": false
+            }
+        ],
+        "director_reference_information_extracted": [
+            1
+        ],
+        "director_reference_strength_values": [
+            0.6
+        ],
+        "director_reference_secondary_strength_values": [
+            0.19999999999999996
+        ],
+        "negative_prompt": "female, boobs, breasts",
+        "deliberate_euler_ancestral_bug": false,
+                "data": "<redacted>"
+            }
+        ]
+    },
+    "use_new_shared_trial": true,
+    "recaptcha_token": "0cAFcWeA7c2pRKyYD5HljndohKHP2_-hPeMfZrWHoXqgu5ZnWSZsNYiTo8ygy1mhf_-05F_GGz9KCMHBy1ozV0vZktiCD6YTgE1_ktEvyrg-x4_z2CDsbsbaBnYCZZ7JfOgPj0l5kpQgull9ecsJRINx9TshvC6yjiVYfcoOQv6dmMsIN3lp21zMKrn7vpkBZTUgdY0xRm6SotWC27YZRqK1eroQ5oOfxFNZQoI1W2OZdqKsRk9cT_OYTQJBgPjNzqHf70aSsO8z2PxDdvK0GcO85Mrz0wkei2KjPPEK5ENxnBUevpmO3d2ejgUgW4a9GY5a7856SqVsa1rWLpF03eWQv-mnyeTLNcJ4UB1yw4HWbJd0p-QPcJdivFGUGtkVbc6h8-fcYHX3CeWjsZ3-zf9H9YptDkv4i43IcA_cPicz3BcD3icsxxOhPx83c2t1tNVCto1TWCO3GoXefk8OH5puicDow5DdrQNflZFbJ4hIFp1L94zCKJ3_VhrPsBblZZLAGy-EbbKdFxLUKx9BkoRRTWGvp1gRjWT6krNSTbDg05aYAu4OexmbJT6RWTORRDhU3l90wUGHOd0ZHyT5LetwP9U9kevdm8jlpBp5JSXaRcAoWbdLh1GzxvOK1HkkCjOAQIGFiQvUvyERPgh48SpyVaN3QR0UTsozl00yFgfZJWk5mixwa1tbTQV0yf8_E0Uap21WL64e2nUU2iYxz-q5X393GFz2rQVdveST2RDRT-rKVjAXxsB62lD6-c2oucM078EcDtOqNiKCrXtLXl3rOrzvzeSyt1Akb6CBVX6-MXjcvL9UEZL0k00EDviws9fDnW2sPMdrlWB6hi5vO1b8sR8KhpbrwSJGgKtr52pxeW3SuVzyzFBD2drnT2ef1mnwRgEaFaim8NyTDfMgukraWClrK_GMsdq85aqgp8RibYQeVfvywkZPGU1CugNZb-proHvbGQasp4r2dPZVYNAK9pzpyc3U0YQV7XXbCMPn307HBjRzcX4vA3G1I8-y1A4MDWbD_B9igVpjNXLz6ImnPY_N7Rn5LFSknV2JfH3AQX_JiYwvspNncs0UdWtvNHgepXJBAQ6VXE6g-F_dtYvSvCs3L2ou9AtIPj-DF_9y7mof2I-i9pgfJxK498oWO_3MUU8No-5OpdG958BK6BYZ3tuDhz4-jclTee9Zwext243YFw4ngJ8xRd1s9GZ3SMjZ601cii5cQhziriPDB3tZprxFNWL50xz8p6AMF9Ddm9PrM8nDzvq-vLLBru_rlt4RSWL7j2cGgxezQiT8LcYEKigP75Zuk4_ousplhWMt1c3M2c2kBw7A8Oht_WAf5AY07fNQpO6uYdq-9kOcZAhIc7wA3gQ9RzwlbH4Ejo5YAPc8F39Lacreml_DdtigLUoeBu-nhd9jGZcSQZHjvsVcOoz7hIDrj3SMR8JjaP-ZN3ZurOHFJFqdfhlp-wvx-rCswrmKNlQCwgV7G_FfJ-iKnCxjDBorHbTpvfhMBAxqEhxapMY430iHQmh-H38wt32zUaBL_iOIRxuGECr2RPBFQJ7JtomZNVpK_S9_tmf-TFCnm-ze37Ov3NCYqfSUYy7cfnzMl6Dzbkx6eQvGwreVEGxG2Mq5dNZl75Tz0ZTfhkhG3vbmmku89zFArluLBm_d6csiaR_-kV_zzzC3esbhCleXTkcsbr0Kx8xt5Af0alxIxXgPDLwP9q7hs_qe73lbiAIJx8nnBwJjlpOeszTXbkfEOgi7QLHFWZOaCC6YtqYpDCa_czEeuXrtU_QWqjFK2kPvv1glXqMLDo4xgoYQyAcuFednribUdy6h1yiiVm-SXdjfc_qpWjYI7felHi0YfKEgTVSXbay-k8u6IQXbwD__DFBqTTRXqo_EpFE84OrTbXkXOpS5F5o72_gkmndhGUEwOLeHLHIILbnNIU1vanZFxQ4KAYoWl66daKTcZMv5mrH7UyS1rDh363S64AML7cfbk0vkzwL7fodNpNDWpCqiOJzZjbsABUACWVqX-pLFwJ9IYK1-tz4l5VXMrYwG6V-nAAi55qifD6RVV9XwhQqbrWz96VjFlBFGBqyFJs1aIPD8ks7A2Fk6gNa-6WZlYLLrcTfk2iQSBg2a1tzxzfFTFXikV1pSI11SSO-L0Wr243GTZkkM4Jztx0yQeLO-EAUqM6K5dj7hNg6r7xnM8Ud0NbIuGdtZGhZ4mfxesjB_MGsMuOIpbnS8Q1lrjj04cLSMp2jWz4"
+        "prefer_brownian": true,
+        "image_format": "png",
+        "director_reference_images_cached": [
+            {
+                "cache_secret_key": "00d535f40ede701c4749c7293fa2b6794b4fb3b4fe1db36ad5c0f4414f1c3ef9",
+}

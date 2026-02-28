@@ -1,0 +1,75 @@
+{
+    "input": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+    "model": "nai-diffusion-4-5-full",
+    "action": "generate",
+    "parameters": {
+        "params_version": 3,
+        "width": 832,
+        "height": 1216,
+        "scale": 5,
+        "sampler": "k_euler_ancestral",
+        "steps": 28,
+        "n_samples": 1,
+        "ucPreset": 4,
+        "qualityToggle": false,
+        "autoSmea": false,
+        "dynamic_thresholding": false,
+        "controlnet_strength": 1,
+        "legacy": false,
+        "add_original_image": true,
+        "cfg_rescale": 0,
+        "noise_schedule": "karras",
+        "legacy_v3_extend": false,
+        "skip_cfg_above_sigma": null,
+        "use_coords": false,
+        "normalize_reference_strength_multiple": true,
+        "inpaintImg2ImgStrength": 1,
+        "v4_prompt": {
+            "caption": {
+                "base_caption": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+                "char_captions": []
+            },
+            "use_coords": false,
+            "use_order": true
+        },
+        "v4_negative_prompt": {
+            "caption": {
+                "base_caption": "female, boobs, breasts",
+                "char_captions": []
+            },
+            "legacy_uc": false
+        },
+        "legacy_uc": false,
+        "seed": 666,
+        "characterPrompts": [],
+        "director_reference_descriptions": [
+            {
+                "caption": {
+                    "base_caption": "character&style",
+                    "char_captions": []
+                },
+                "legacy_uc": false
+            }
+        ],
+        "director_reference_information_extracted": [
+            1
+        ],
+        "director_reference_strength_values": [
+            0.8
+        ],
+        "director_reference_secondary_strength_values": [
+            0
+        ],
+        "negative_prompt": "female, boobs, breasts",
+        "deliberate_euler_ancestral_bug": false,
+        "prefer_brownian": true,
+        "image_format": "png",
+        "director_reference_images_cached": [
+            {
+                "cache_secret_key": "3bebeefa10e9d720e9ee22cafd5548697d5cded5d8bb750d0e14b8ce2ae8881d"
+            }
+        ]
+    },
+    "use_new_shared_trial": true,
+    "recaptcha_token": "0cAFcWeA6-pWjTwYZF6hL7afmPh-Pdzy2MJ-6TA8AcSbDFo5i4w6FYR2AGJQFYRghEpD_q1LRe8Pc5ZjbBqVOq9FDClN2S6zfpNlW4M3WqPK6aZcfq9DkLSkNJlNEczaXFbxuMDGv2yh1MRhO8962dnNfzZmxSo2SMPHeGL6dztkQw7bfzic3SA72TdV3SaAeFPLr4seBWxfswDbA_fBmRgpv2WGtdmqtFaPXCPbGsrG5iRvfvi_s8tZUg6u_oUujAeVHnYOSew3EgiwMG5T6N_IPEoCPm4t3Udyu2W6MB30MOKI9CqOiGTdCkeVVdWOMrSJNXQ28OAMkVVQhFDwlmRD8vOubnASHurqHzAtoiJ1yFu8IFnEsAP10fNTbIKYcmzQrjpj0jFLmIep-fdBr0VMAK1NnttZPcc3EvqijdQkeXIshQjqNlnyNrSSbJJ3x7jTW5_FhSMxtNe09B_rhxqya-zgsRlar1S6Wsg2hJKXUaIG6hgwRpqdFdTzOsLRrezNdIkYxd4d2rCndjE2vMtQOd9Ij2YfJtHlnYkcHSvVkseukwJHD9FuHfXkv2t6_WzaFXVgSeiYN60Jk1c3SvCsw_RQ3rQZ4ebp5GxUmtd25jd5-4kwf_KUmvZv5UmVgkZSOHqxsb91542on8XO4G_ELMB2iYX0tdO5Oj9YHWi4iQkg0KtnFn-DSnRzZOhQYbB_V-J0jY6BD-RFRmnD_0ELxPKSzEQG3j_x8XuZjCaFrsK3uPsnufHi6AavabPCUTtpd57zqmAP4499UeTuEvfLPLn0F6kczQZFEg2IF4KL_yzINUWLtt_A8PPJbmQ5yTXBNcnnAKXQObYwxNJqligxsRSv3k0Tbp3cd2AF6ivdyon3uRZtUelyNL_4ro5-I9-UEsxcGkgEwOwY6-9tx0AfdeM2vZ7Z9MayIpFmK4ysIiQS-fTbR1YBbO1YUJ_lrFdRKl9VrQjKZT7-r44q9TXNmRbl-JA7-a3SgclfxioNEwMLJYXvW64o26AAblrVnIO-p0SbufZB6fK-G0r4mhh_87lctXDhP9pe32KioR24I85CKiuKmwOtiye6tzmXZwENp7RNuKmlCDpWWsgBah_V53HsBCyypcTMRVmXVElDKsdFwNwV59ihgpdHk1u6deLV2iLrtXbFo36adB5zxmsOsTfAYdm16tV0X2ACHuh6v5v2BX9-1vqVOKojGLrl0poNB629Gi9I9R2GrgPPmJmJWKmxJ5uRf5n2xAdH1bvyqGqvrYUIKGCRf4HSuhQQvhKRsRnhZfdpXnl4Xqsn0nOGj5L7iFVybPcH3WCP6WWAwN3EmcR868_NlPhfP8XdbU6Gj24GU07ZzV1xz6_hKchoBaSDjVIAuk6iDGLxjqvYKI2vQGItfoLyrE7B4GfxVw2YUCblbtiLEI6AEsdaYfas1smBnih7RIO-8WSN1a64l8d3Oxh7fMJfyFrEQRgtTUDrHQrk--AhgTFN19O5m-IBzA1-NXmUySu1C63eftRF5Bp8ZHZ8MuEFKybdLQJrzt5GS4sxHc-Hf-zjjGgOj2GYxgLU5mV7RjDebUSYnAFISod6xi5aotOM7YB_ZJjO5hsUgybkZm0k09mWRB0ycKJ64brwBwVQrpxZUpVkLG3SKxP9PiVO7xyULEPJN7xKx247tTqQyKaGpesIx2Xs1xXuDZ6XBngbXP1L0Flftrt5S0vCvJeIPyjppAmcjYPgU1wzLbdZiOE86O4RMH2G4MMBWEnE2oyeRASVx8p-zbFgBCmvADL1KfkaYV7mJRb4tvTMToiUlwxAWjLH-FM3ngz63mF6VDcfIKsVNmcwW0EYSpj03U7D1eoSrBiddSeTu1EN1SCMd33yxmi89nWJCbftIfFmTd6ypOmKoHhSX0H_UJ37aUUJy9JYQOuk3o7nnD2xVg5vi_drFcGtyPOn-h5HuUmgR1oFU-pPvV68KAC0-2rzc8KJnDmEipbRSGdPVvTknKz02OeS5zBuJ_Mpwf_CVWAHFY9GD5_CM9ujGS2XVLhiW2-3w4bE86Yd6QtYq5dnPoRG7xhoICGG5QhV92mUFGHEb369IlBmTgy_uRaTIx9z7jmdMp29Htrqpp8wgGXhwfH0Lz3BiaIebLkPW4Hw-fyldJDV7YPieX4Fysc6sxnxV1QpQIqMZHH6LBdkR_0K651wY5dNqAFGiPX_vrKXMiIEW5BKae4FheEJEPaOwYe9VQnPFS_6WwvGqGRlQpuNkZrXdFSMvt7V1wogm7TQOmfnhypysUcFp151RY1b0rXwHTHBllRRQ"
+}
