@@ -262,6 +262,7 @@ def construct_payload():
         ref_strengths = []
         director_reference_descriptions = []
         director_reference_secondary_strengths = []
+        director_reference_images_cached = []
         for ref in precise_references:
             print(f"  Encoding reference: {ref.get('image_path')}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
@@ -284,17 +285,24 @@ def construct_payload():
                 director_reference_secondary_strengths.append(
                     compute_secondary_strength(reference_type, reference_strength)
                 )
+                cache_secret_key = ref.get("cache_secret_key")
+                if cache_secret_key:
+                    director_reference_images_cached.append(
+                        {"cache_secret_key": cache_secret_key}
+                    )
         if ref_images:
-            # Keep the encoded-image arrays as the transport for the actual
-            # reference image while adding the frontend's director metadata.
             parameters["reference_image_multiple"] = ref_images
             parameters["reference_information_extracted_multiple"] = ref_info_extracted
             parameters["reference_strength_multiple"] = ref_strengths
             parameters["normalize_reference_strength_multiple"] = True
-            parameters["director_reference_descriptions"] = director_reference_descriptions
-            parameters["director_reference_information_extracted"] = ref_info_extracted
-            parameters["director_reference_strength_values"] = ref_strengths
-            parameters["director_reference_secondary_strength_values"] = director_reference_secondary_strengths
+            if len(director_reference_images_cached) == len(ref_images):
+                parameters["director_reference_descriptions"] = director_reference_descriptions
+                parameters["director_reference_information_extracted"] = ref_info_extracted
+                parameters["director_reference_strength_values"] = ref_strengths
+                parameters["director_reference_secondary_strength_values"] = director_reference_secondary_strengths
+                parameters["director_reference_images_cached"] = director_reference_images_cached
+            elif director_reference_images_cached:
+                print("  [warn] ignoring partial cache_secret_key data; falling back to reference_image_multiple only")
 
     return payload
 
