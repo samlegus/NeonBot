@@ -184,7 +184,7 @@ def compute_secondary_strength(reference_type, strength, fidelity):
     if reference_type == "character":
         return 1.0 - fidelity
     if reference_type == "style":
-        return strength * 0.5
+        return 1.0 - fidelity
     return 1.0 - strength
 
 
@@ -334,8 +334,8 @@ def construct_payload():
         "sampler": sampler,
         "steps": steps,
         "n_samples": n_samples,
-        "ucPreset": 0 if uc_preset_enabled else 1, # Depending on API rules, 0 or 1 maps to presets
-        "qualityToggle": quality_tags_enabled,
+        "ucPreset": 4 if uc_preset_enabled else 1,
+        "qualityToggle": False if quality_tags_enabled else False,
         "autoSmea": False,
         "dynamic_thresholding": False,
         "controlnet_strength": 1,
@@ -346,6 +346,7 @@ def construct_payload():
         "legacy_v3_extend": False,
         "skip_cfg_above_sigma": None,
         "use_coords": False,
+        "inpaintImg2ImgStrength": 1,
         "seed": final_seed,
         "characterPrompts": [],
         "negative_prompt": negative_prompt,
