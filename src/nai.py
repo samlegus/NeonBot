@@ -37,8 +37,8 @@ precise_references = [
     {
         "image_path": "input/ceru.jpg",
         "type": "style",       
-        "fidelity": .9, # how much detail?
-        "strength": .9  # how "hard"?
+        "strength": .9,  # how "hard"?
+        "fidelity": .9   # how much detail?
     }
 ]
 
@@ -73,6 +73,37 @@ def redact_payload_for_debug(payload):
         return value
 
     return scrub("root", payload)
+
+
+def print_reference_debug_summary():
+    """Print human-readable reference settings in strength/fidelity order."""
+    if vibe_transfer_image_path:
+        print("Vibe reference:")
+        print(
+            json.dumps(
+                {
+                    "image_path": vibe_transfer_image_path,
+                    "strength": vibe_transfer_strength,
+                    "fidelity": vibe_transfer_information_extracted,
+                },
+                indent=2,
+                ensure_ascii=True,
+            )
+        )
+
+    if precise_references:
+        refs = []
+        for ref in precise_references:
+            refs.append(
+                {
+                    "image_path": ref.get("image_path"),
+                    "type": ref.get("type", "character"),
+                    "strength": ref.get("strength", 0.6),
+                    "fidelity": ref.get("fidelity", 1.0),
+                }
+            )
+        print("Precise references:")
+        print(json.dumps(refs, indent=2, ensure_ascii=True))
 
 
 def image_to_base64(filepath, force_png=False):
@@ -211,6 +242,7 @@ def construct_payload():
 
 def run_gui_emulation():
     print("Preparing payload...")
+    print_reference_debug_summary()
     payload = construct_payload()
     print("Full payload:")
     print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
