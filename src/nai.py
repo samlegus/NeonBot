@@ -58,6 +58,14 @@ def redact_payload_for_debug(payload):
     """Redact large image/base64 fields for readable debug output."""
     def scrub(key, value):
         if isinstance(value, dict):
+            if key == "director_reference_images_cached":
+                redacted_items = []
+                for item in value.values():
+                    if isinstance(item, str) and len(item) > 80:
+                        redacted_items.append(f"<redacted:{len(item)} chars>")
+                    else:
+                        redacted_items.append(item)
+                return redacted_items
             return {k: scrub(k, v) for k, v in value.items()}
         if isinstance(value, list):
             if "image" in key.lower():
@@ -65,11 +73,24 @@ def redact_payload_for_debug(payload):
                 for item in value:
                     if isinstance(item, str):
                         redacted.append(f"<redacted:{len(item)} chars>")
+                    elif isinstance(item, dict):
+                        redacted.append(
+                            {
+                                k: (
+                                    f"<redacted:{len(v)} chars>"
+                                    if isinstance(v, str) and len(v) > 80
+                                    else scrub(k, v)
+                                )
+                                for k, v in item.items()
+                            }
+                        )
                     else:
                         redacted.append(item)
                 return redacted
             return [scrub(key, item) for item in value]
         if isinstance(value, str) and "image" in key.lower() and len(value) > 80:
+            return f"<redacted:{len(value)} chars>"
+        if key == "data" and isinstance(value, str) and len(value) > 80:
             return f"<redacted:{len(value)} chars>"
         return value
 
@@ -180,6 +201,41 @@ def build_director_reference_image(filepath):
         "cache_secret_key": cache_secret_key,
         "data": png_b64,
     }
+
+
+def export_director_reference_debug(parameters):
+    """Write precise-reference debug artifacts for comparison against HAR data."""
+    refs = parameters.get("director_reference_images_cached", [])
+    if not refs:
+        return
+
+    os.makedirs("output", exist_ok=True)
+    manifest = []
+    for idx, ref in enumerate(refs):
+        png_b64 = ref.get("data")
+        if not png_b64:
+            continue
+        png_bytes = base64.b64decode(png_b64)
+        png_path = os.path.join("output", f"director_ref_{idx}.png")
+        with open(png_path, "wb") as handle:
+            handle.write(png_bytes)
+        manifest.append(
+            {
+                "index": idx,
+                "png_path": png_path,
+                "cache_secret_key": ref.get("cache_secret_key"),
+                "png_bytes": len(png_bytes),
+                "base64_chars": len(png_b64),
+                "sha256_png": hashlib.sha256(png_bytes).hexdigest(),
+                "sha256_b64txt": hashlib.sha256(png_b64.encode("utf-8")).hexdigest(),
+                "head_b64": png_b64[:64],
+            }
+        )
+
+    debug_path = os.path.join("output", "director_ref_debug.json")
+    with open(debug_path, "w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2, ensure_ascii=True)
+    print(f"Director reference debug written: {debug_path}")
 
 def construct_payload():
     """Builds the JSON payload imitating the NovelAI frontend logic."""
@@ -315,6 +371,7 @@ def run_gui_emulation():
     print("Preparing payload...")
     print_reference_debug_summary()
     payload = construct_payload()
+    export_director_reference_debug(payload["parameters"])
     print("Full payload:")
     print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
     os.makedirs("output", exist_ok=True)
