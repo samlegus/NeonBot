@@ -53,6 +53,28 @@ n_samples = 1
 
 
 #Engine
+def redact_payload_for_debug(payload):
+    """Redact large image/base64 fields for readable debug output."""
+    def scrub(key, value):
+        if isinstance(value, dict):
+            return {k: scrub(k, v) for k, v in value.items()}
+        if isinstance(value, list):
+            if "image" in key.lower():
+                redacted = []
+                for item in value:
+                    if isinstance(item, str):
+                        redacted.append(f"<redacted:{len(item)} chars>")
+                    else:
+                        redacted.append(item)
+                return redacted
+            return [scrub(key, item) for item in value]
+        if isinstance(value, str) and "image" in key.lower() and len(value) > 80:
+            return f"<redacted:{len(value)} chars>"
+        return value
+
+    return scrub("root", payload)
+
+
 def image_to_base64(filepath, force_png=False):
     """Helper to convert local image to base64 string for the API.
     NAI reference images (vibe/precise) require PNG format.
@@ -190,6 +212,8 @@ def construct_payload():
 def run_gui_emulation():
     print("Preparing payload...")
     payload = construct_payload()
+    print("Full payload:")
+    print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
     os.makedirs("output", exist_ok=True)
     
     headers = {
