@@ -450,8 +450,9 @@ def run_gui_emulation():
     print("Preparing payload...")
     print_reference_debug_summary()
     payload = construct_payload()
-    export_payload_debug(payload)
-    export_director_reference_debug(payload["parameters"])
+    # Disabled by default now that payload parity work is mostly complete.
+    # export_payload_debug(payload)
+    # export_director_reference_debug(payload["parameters"])
     print("Full payload:")
     print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
     os.makedirs("output", exist_ok=True)
