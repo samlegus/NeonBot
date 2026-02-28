@@ -3,6 +3,7 @@ import sys
 import requests
 import json
 import base64
+import hashlib
 import zipfile
 from io import BytesIO
 from dotenv import load_dotenv
@@ -165,6 +166,21 @@ def compute_secondary_strength(reference_type, strength):
         return strength * 0.5
     return 1.0 - strength
 
+
+def build_director_reference_image(filepath):
+    """Build the GUI-style inline cached image object for precise refs."""
+    png_b64 = image_to_base64(filepath, force_png=True)
+    if not png_b64:
+        return None
+    # The GUI sends both a cache_secret_key and inline PNG data. The key does
+    # not appear to be a simple SHA-256 of either the PNG bytes or the base64
+    # text, but a stable content-derived key is still the safest client value.
+    cache_secret_key = hashlib.sha256(base64.b64decode(png_b64)).hexdigest()
+    return {
+        "cache_secret_key": cache_secret_key,
+        "data": png_b64,
+    }
+
 def construct_payload():
     """Builds the JSON payload imitating the NovelAI frontend logic."""
     import random
@@ -257,20 +273,18 @@ def construct_payload():
     # Uses the multi-reference arrays, same underlying API as Vibe Transfer but
     # interpreted differently by the V4/V4.5 model for higher-fidelity matching.
     if precise_references:
-        ref_images = []
         ref_info_extracted = []
         ref_strengths = []
         director_reference_descriptions = []
         director_reference_secondary_strengths = []
         director_reference_images_cached = []
         for ref in precise_references:
-            print(f"  Encoding reference: {ref.get('image_path')}...")
+            print(f"  Preparing reference: {ref.get('image_path')}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
             reference_strength = ref.get("strength", 0.6)
             reference_fidelity = ref.get("fidelity", 1.0)
-            encoded = encode_reference_image(ref.get("image_path"), model_name, reference_fidelity)
-            if encoded:
-                ref_images.append(encoded)
+            director_image = build_director_reference_image(ref.get("image_path"))
+            if director_image:
                 ref_info_extracted.append(reference_fidelity)
                 ref_strengths.append(reference_strength)
                 director_reference_descriptions.append(
@@ -285,24 +299,14 @@ def construct_payload():
                 director_reference_secondary_strengths.append(
                     compute_secondary_strength(reference_type, reference_strength)
                 )
-                cache_secret_key = ref.get("cache_secret_key")
-                if cache_secret_key:
-                    director_reference_images_cached.append(
-                        {"cache_secret_key": cache_secret_key}
-                    )
-        if ref_images:
-            parameters["reference_image_multiple"] = ref_images
-            parameters["reference_information_extracted_multiple"] = ref_info_extracted
-            parameters["reference_strength_multiple"] = ref_strengths
+                director_reference_images_cached.append(director_image)
+        if director_reference_images_cached:
             parameters["normalize_reference_strength_multiple"] = True
-            if len(director_reference_images_cached) == len(ref_images):
-                parameters["director_reference_descriptions"] = director_reference_descriptions
-                parameters["director_reference_information_extracted"] = ref_info_extracted
-                parameters["director_reference_strength_values"] = ref_strengths
-                parameters["director_reference_secondary_strength_values"] = director_reference_secondary_strengths
-                parameters["director_reference_images_cached"] = director_reference_images_cached
-            elif director_reference_images_cached:
-                print("  [warn] ignoring partial cache_secret_key data; falling back to reference_image_multiple only")
+            parameters["director_reference_descriptions"] = director_reference_descriptions
+            parameters["director_reference_information_extracted"] = ref_info_extracted
+            parameters["director_reference_strength_values"] = ref_strengths
+            parameters["director_reference_secondary_strength_values"] = director_reference_secondary_strengths
+            parameters["director_reference_images_cached"] = director_reference_images_cached
 
     return payload
 
