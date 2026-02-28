@@ -1,0 +1,76 @@
+{
+  "action": "generate",
+  "input": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+  "model": "nai-diffusion-4-5-full",
+  "parameters": {
+    "add_original_image": true,
+    "autoSmea": false,
+    "cfg_rescale": 0,
+    "characterPrompts": [],
+    "controlnet_strength": 1,
+    "deliberate_euler_ancestral_bug": false,
+    "director_reference_descriptions": [
+      {
+        "caption": {
+          "base_caption": "character",
+          "char_captions": []
+        },
+        "legacy_uc": false
+      }
+    ],
+    "director_reference_images_cached": [
+      {
+        "cache_secret_key": "8a60ce55580f2724eec68ef7b46ac9622fb22132676535251584441f9db1c78b",
+        "data_base64_chars": 2284168,
+        "data_head_b64": "iVBORw0KGgoAAAANSUhEUgAABcAAAAXACAYAAABxs+/iAAEAAElEQVR4nOz9aY8k",
+        "data_sha256_b64txt": "5725ff494312789d3051e31a9da9c39a84d896279f288594fbd25cce6a259acf",
+        "data_sha256_png": "8a60ce55580f2724eec68ef7b46ac9622fb22132676535251584441f9db1c78b"
+      }
+    ],
+    "director_reference_information_extracted": [
+      1.0
+    ],
+    "director_reference_secondary_strength_values": [
+      0.4
+    ],
+    "director_reference_strength_values": [
+      0.6
+    ],
+    "dynamic_thresholding": false,
+    "height": 1216,
+    "image_format": "png",
+    "legacy": false,
+    "legacy_uc": false,
+    "legacy_v3_extend": false,
+    "n_samples": 1,
+    "negative_prompt": "female, boobs, breasts",
+    "noise_schedule": "karras",
+    "normalize_reference_strength_multiple": true,
+    "params_version": 3,
+    "prefer_brownian": true,
+    "qualityToggle": true,
+    "sampler": "k_euler_ancestral",
+    "scale": 5.0,
+    "seed": 666,
+    "skip_cfg_above_sigma": null,
+    "steps": 28,
+    "ucPreset": 0,
+    "use_coords": false,
+    "v4_negative_prompt": {
+      "caption": {
+        "base_caption": "female, boobs, breasts",
+        "char_captions": []
+      },
+      "legacy_uc": false
+    },
+    "v4_prompt": {
+      "caption": {
+        "base_caption": "an orange haired catboy winking at the viewer, looking at viewer, wink, playful",
+        "char_captions": []
+      },
+      "use_coords": false,
+      "use_order": true
+    },
+    "width": 832
+  }
+}

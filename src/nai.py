@@ -36,7 +36,7 @@ vibe_transfer_strength = 0.5
 #https://docs.novelai.net/en/image/precisereference
 precise_references = [
     {
-        "image_path": "input/johnny.jpg",
+        "image_path": "input/johnny.png",
         "type": "character",       
         "strength": .6,  # how "hard"?
         "fidelity": .8   # how much detail?
@@ -45,13 +45,11 @@ precise_references = [
 
 steps = 28 
 guidance = 5.0 
-seed = 0 
+seed = 666
 sampler = "k_euler_ancestral"
 width = 832
 height = 1216
 n_samples = 1
-
-
 
 #Engine
 def redact_payload_for_debug(payload):
