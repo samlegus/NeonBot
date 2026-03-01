@@ -45,7 +45,7 @@ precise_references = [
 
 steps = 28 
 guidance = 5.0 
-seed = 666
+seed = 0
 sampler = "k_euler_ancestral"
 width = 832
 height = 1216
@@ -412,12 +412,14 @@ def construct_payload():
         director_reference_descriptions = []
         director_reference_secondary_strengths = []
         director_reference_images_cached = []
+        failed_precise_paths = []
         for ref in precise_references:
-            print(f"  Preparing reference: {ref.get('image_path')}...")
+            image_path = ref.get("image_path")
+            print(f"  Preparing reference: {image_path}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
             reference_strength = ref.get("strength", 1.0)
             reference_fidelity = ref.get("fidelity", 1.0)
-            director_image = build_director_reference_image(ref.get("image_path"))
+            director_image = build_director_reference_image(image_path)
             if director_image:
                 # Current API validation requires literal 1.0 for each director
                 # reference entry, regardless of the GUI's displayed fidelity.
@@ -436,6 +438,13 @@ def construct_payload():
                     compute_secondary_strength(reference_type, reference_strength, reference_fidelity)
                 )
                 director_reference_images_cached.append(director_image)
+            else:
+                failed_precise_paths.append(image_path)
+        if failed_precise_paths:
+            missing = ", ".join(repr(path) for path in failed_precise_paths)
+            raise FileNotFoundError(
+                f"Failed to load precise reference image(s): {missing}"
+            )
         if director_reference_images_cached:
             parameters["normalize_reference_strength_multiple"] = True
             parameters["director_reference_descriptions"] = director_reference_descriptions

@@ -19,6 +19,13 @@ def add_opt(argv, flag, value):
     argv.extend([flag, str(value)])
 
 
+def require_existing_file(path_str, label):
+    if not path_str:
+        return
+    if not Path(path_str).exists():
+        raise ValueError(f"{label} does not exist: {path_str}")
+
+
 def validate_payload(payload):
     if not isinstance(payload, dict):
         raise ValueError("payload must be a JSON object")
@@ -48,13 +55,17 @@ def validate_payload(payload):
 
     if "i2i" in mode_parts:
         i2i = payload.get("i2i", {})
-        if not i2i.get("image"):
+        image = i2i.get("image")
+        if not image:
             raise ValueError("i2i mode requires i2i.image")
+        require_existing_file(image, "i2i.image")
 
     if "vibe" in mode_parts:
         vibe = payload.get("vibe", {})
-        if not vibe.get("image"):
+        image = vibe.get("image")
+        if not image:
             raise ValueError("vibe mode requires vibe.image")
+        require_existing_file(image, "vibe.image")
 
     if "precise" in mode_parts:
         precise = payload.get("precise", [])
@@ -63,8 +74,10 @@ def validate_payload(payload):
         for idx, ref in enumerate(precise):
             if not isinstance(ref, dict):
                 raise ValueError(f"precise[{idx}] must be an object")
-            if not ref.get("image"):
+            image = ref.get("image")
+            if not image:
                 raise ValueError(f"precise[{idx}].image is required")
+            require_existing_file(image, f"precise[{idx}].image")
 
     return mode_parts
 
