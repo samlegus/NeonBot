@@ -38,8 +38,8 @@ precise_references = [
     {
         "image_path": "input/johnny.png",
         "type": "character&style",       
-        "strength": .8,  # how "hard"?
-        "fidelity": 1   # how much detail?
+        "strength": 1.0,  # how "hard"?
+        "fidelity": 1.0   # how much detail?
     }
 ]
 
@@ -118,7 +118,7 @@ def print_reference_debug_summary():
                 {
                     "image_path": ref.get("image_path"),
                     "type": ref.get("type", "character"),
-                    "strength": ref.get("strength", 0.6),
+                    "strength": ref.get("strength", 1.0),
                     "fidelity": ref.get("fidelity", 1.0),
                 }
             )
@@ -415,7 +415,7 @@ def construct_payload():
         for ref in precise_references:
             print(f"  Preparing reference: {ref.get('image_path')}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
-            reference_strength = ref.get("strength", 0.6)
+            reference_strength = ref.get("strength", 1.0)
             reference_fidelity = ref.get("fidelity", 1.0)
             director_image = build_director_reference_image(ref.get("image_path"))
             if director_image:

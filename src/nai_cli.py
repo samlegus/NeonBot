@@ -29,7 +29,7 @@ def parse_precise_ref(ref_str):
 
     filepath = parts[0] if parts and parts[0] else ""
     ref_type = "character"
-    strength = 0.6
+    strength = 1.0
     fidelity = 1.0
 
     if len(parts) > 1 and parts[1]:

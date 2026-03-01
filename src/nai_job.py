@@ -23,6 +23,17 @@ def validate_payload(payload):
     if not isinstance(payload, dict):
         raise ValueError("payload must be a JSON object")
 
+    if "character_prompt" in payload:
+        value = payload["character_prompt"]
+        if not isinstance(value, (str, list)):
+            raise ValueError("character_prompt must be a string or an array of strings")
+        if isinstance(value, list) and not all(isinstance(item, str) for item in value):
+            raise ValueError("character_prompt array entries must be strings")
+
+    for bool_key in ("quality_tags_enabled", "uc_preset_enabled"):
+        if bool_key in payload and not isinstance(payload[bool_key], bool):
+            raise ValueError(f"{bool_key} must be true or false")
+
     raw_mode = payload.get("mode")
     if raw_mode in (None, "", "text"):
         mode_parts = set()
@@ -61,6 +72,7 @@ def validate_payload(payload):
 def build_argv(payload):
     argv = []
 
+    add_opt(argv, "--name", payload.get("name"))
     add_opt(argv, "--prompt", payload.get("prompt"))
     add_opt(argv, "--negative-prompt", payload.get("negative_prompt"))
     add_opt(argv, "--model", payload.get("model"))
@@ -71,6 +83,25 @@ def build_argv(payload):
     add_opt(argv, "--width", payload.get("width"))
     add_opt(argv, "--height", payload.get("height"))
     add_opt(argv, "--samples", payload.get("samples"))
+
+    character_prompt = payload.get("character_prompt")
+    if isinstance(character_prompt, str):
+        argv.extend(["--character-prompt", character_prompt])
+    elif isinstance(character_prompt, list):
+        for item in character_prompt:
+            argv.extend(["--character-prompt", item])
+
+    quality_tags_enabled = payload.get("quality_tags_enabled")
+    if quality_tags_enabled is True:
+        argv.append("--quality-tags")
+    elif quality_tags_enabled is False:
+        argv.append("--no-quality-tags")
+
+    uc_preset_enabled = payload.get("uc_preset_enabled")
+    if uc_preset_enabled is True:
+        argv.append("--uc-preset")
+    elif uc_preset_enabled is False:
+        argv.append("--no-uc-preset")
 
     mode_parts = validate_payload(payload)
 
@@ -89,7 +120,7 @@ def build_argv(payload):
         for ref in precise:
             image = ref.get("image")
             ref_type = ref.get("type", "character")
-            strength = ref.get("strength", 0.6)
+            strength = ref.get("strength", 1.0)
             fidelity = ref.get("fidelity", 1.0)
             if image:
                 argv.extend(
