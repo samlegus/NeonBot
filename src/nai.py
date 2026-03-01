@@ -335,7 +335,7 @@ def construct_payload():
         "steps": steps,
         "n_samples": n_samples,
         "ucPreset": 4 if uc_preset_enabled else 1,
-        "qualityToggle": False if quality_tags_enabled else False,
+        "qualityToggle": quality_tags_enabled,
         "autoSmea": False,
         "dynamic_thresholding": False,
         "controlnet_strength": 1,
