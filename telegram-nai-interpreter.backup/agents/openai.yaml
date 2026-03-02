@@ -1,4 +1,0 @@
-interface:
-  display_name: "Telegram NAI Interpreter"
-  short_description: "Parse messy Telegram image requests"
-  default_prompt: "Use $telegram-nai-interpreter to turn an informal Telegram request into a safe nai_job.py JSON payload and command."

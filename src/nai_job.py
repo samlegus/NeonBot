@@ -26,6 +26,26 @@ def require_existing_file(path_str, label):
         raise ValueError(f"{label} does not exist: {path_str}")
 
 
+def infer_feature_parts(payload):
+    parts = set()
+
+    i2i = payload.get("i2i")
+    if isinstance(i2i, dict) and i2i.get("image"):
+        parts.add("i2i")
+
+    vibe = payload.get("vibe")
+    if isinstance(vibe, dict) and vibe.get("image"):
+        parts.add("vibe")
+
+    precise = payload.get("precise")
+    if isinstance(precise, list) and any(
+        isinstance(ref, dict) and ref.get("image") for ref in precise
+    ):
+        parts.add("precise")
+
+    return parts
+
+
 def validate_payload(payload):
     if not isinstance(payload, dict):
         raise ValueError("payload must be a JSON object")
@@ -41,36 +61,38 @@ def validate_payload(payload):
         if bool_key in payload and not isinstance(payload[bool_key], bool):
             raise ValueError(f"{bool_key} must be true or false")
 
-    raw_mode = payload.get("mode")
-    if raw_mode in (None, "", "text"):
-        mode_parts = set()
-    else:
-        mode_parts = {part.strip() for part in str(raw_mode).split("+") if part.strip()}
+    if "mode" in payload:
+        raise ValueError(
+            "mode is no longer supported; enable features by providing i2i.image, vibe.image, or precise entries"
+        )
+
+    inferred_parts = infer_feature_parts(payload)
+    mode_parts = inferred_parts
 
     valid_parts = {"i2i", "vibe", "precise"}
     if not mode_parts.issubset(valid_parts):
-        raise ValueError("mode must be text/empty or a '+' combination of: i2i, vibe, precise")
+        raise ValueError("enabled features must be drawn from: i2i, vibe, precise")
     if "vibe" in mode_parts and "precise" in mode_parts:
-        raise ValueError("Invalid mode combination: vibe+precise is not supported")
+        raise ValueError("Invalid feature combination: vibe and precise cannot be used together")
 
     if "i2i" in mode_parts:
         i2i = payload.get("i2i", {})
         image = i2i.get("image")
         if not image:
-            raise ValueError("i2i mode requires i2i.image")
+            raise ValueError("i2i.image is required when i2i is enabled")
         require_existing_file(image, "i2i.image")
 
     if "vibe" in mode_parts:
         vibe = payload.get("vibe", {})
         image = vibe.get("image")
         if not image:
-            raise ValueError("vibe mode requires vibe.image")
+            raise ValueError("vibe.image is required when vibe is enabled")
         require_existing_file(image, "vibe.image")
 
     if "precise" in mode_parts:
         precise = payload.get("precise", [])
         if not isinstance(precise, list) or not precise:
-            raise ValueError("precise mode requires a non-empty precise array")
+            raise ValueError("precise must be a non-empty array when precise reference is enabled")
         for idx, ref in enumerate(precise):
             if not isinstance(ref, dict):
                 raise ValueError(f"precise[{idx}] must be an object")
