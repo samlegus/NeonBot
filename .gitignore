@@ -170,3 +170,4 @@ output/
 !output/.gitkeep
 input/
 !input/.gitkeep
+.stfolder

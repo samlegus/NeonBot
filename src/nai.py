@@ -5,6 +5,7 @@ import json
 import base64
 import hashlib
 import zipfile
+from datetime import datetime
 from io import BytesIO
 from dotenv import load_dotenv
 
@@ -17,8 +18,8 @@ NOVELAI_API_URL = "https://image.novelai.net/ai/generate-image"
 
 name = "img" #optional finename to be overriden
 model_name = "nai-diffusion-4-5-full"
-prompt = "an orange haired catboy winking at the viewer, looking at viewer, wink, playful" 
-quality_tags_enabled = True
+prompt = "an anthro snow leopard male posing suggestively, masterpiece, 1boy, shota, slut, femboy,tease,emo hair, dark purple hair, bangs, purple spots, cat ears, looking at viewer, cyberpunk background" 
+quality_tags_enabled = False
 negative_prompt = "female, boobs, breasts" 
 uc_preset_enabled = True
 character_prompts = [] 
@@ -36,8 +37,8 @@ vibe_transfer_strength = 0.5
 #https://docs.novelai.net/en/image/precisereference
 precise_references = [
     {
-        "image_path": "input/johnny.png",
-        "type": "character&style",       
+        "image_path": "input/ceru_for_vibe.png",
+        "type": "character",       
         "strength": 1.0,  # how "hard"?
         "fidelity": 1.0   # how much detail?
     }
@@ -45,11 +46,22 @@ precise_references = [
 
 steps = 28 
 guidance = 5.0 
-seed = 0
+seed = 666
 sampler = "k_euler_ancestral"
 width = 832
 height = 1216
 n_samples = 1
+run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+
+def output_filename(prefix, suffix="", ext=""):
+    """Build a timestamped output filename for sync-safe writes."""
+    filename = f"{run_timestamp}_{prefix}"
+    if suffix:
+        filename += f"_{suffix}"
+    if ext:
+        filename += ext
+    return os.path.join("output", filename)
 
 #Engine
 def redact_payload_for_debug(payload):
@@ -232,7 +244,7 @@ def export_director_reference_debug(parameters):
         if not png_b64:
             continue
         png_bytes = base64.b64decode(png_b64)
-        png_path = os.path.join("output", f"director_ref_{idx}.png")
+        png_path = output_filename("director_ref", str(idx), ".png")
         with open(png_path, "wb") as handle:
             handle.write(png_bytes)
         manifest.append(
@@ -248,7 +260,7 @@ def export_director_reference_debug(parameters):
             }
         )
 
-    debug_path = os.path.join("output", "director_ref_debug.json")
+    debug_path = output_filename("director_ref_debug", ext=".json")
     with open(debug_path, "w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2, ensure_ascii=True)
     print(f"Director reference debug written: {debug_path}")
@@ -303,8 +315,8 @@ def normalize_payload_for_diff(payload):
 def export_payload_debug(payload):
     """Write raw and normalized payload JSON for side-by-side GUI diffing."""
     os.makedirs("output", exist_ok=True)
-    raw_path = os.path.join("output", "script_payload.json")
-    normalized_path = os.path.join("output", "script_payload_normalized.json")
+    raw_path = output_filename("script_payload", ext=".json")
+    normalized_path = output_filename("script_payload_normalized", ext=".json")
 
     with open(raw_path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, ensure_ascii=True)
@@ -482,13 +494,7 @@ def run_gui_emulation():
         saved_paths = []
         with zipfile.ZipFile(BytesIO(response.content)) as z:
             for idx, filename in enumerate(z.namelist()):
-                # Find the next available filename so we never overwrite existing outputs
-                counter = 0
-                while True:
-                    output_path = os.path.join("output", f"{name}_{counter}.png")
-                    if not os.path.exists(output_path):
-                        break
-                    counter += 1
+                output_path = output_filename(name, str(idx), ".png")
                 with open(output_path, "wb") as f:
                     f.write(z.read(filename))
                 print(f"-> Saved: {output_path}")
@@ -536,12 +542,7 @@ def run_upscale(image_filepath, scale_factor=2):
         print("Success! Unpacking zip file...")
         with zipfile.ZipFile(BytesIO(response.content)) as z:
             for idx, filename in enumerate(z.namelist()):
-                counter = 0
-                while True:
-                    output_path = os.path.join("output", f"upscale_{counter}.png")
-                    if not os.path.exists(output_path):
-                        break
-                    counter += 1
+                output_path = output_filename("upscale", str(idx), ".png")
                 with open(output_path, "wb") as f:
                     f.write(z.read(filename))
                 print(f"-> Saved: {output_path}")
