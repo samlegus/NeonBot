@@ -16,54 +16,96 @@ if not NOVELAI_API_KEY:
     raise RuntimeError("NOVELAI_CURRENT_API_KEY is not set")
 NOVELAI_API_URL = "https://image.novelai.net/ai/generate-image"
 
-name = "img" #optional finename to be overriden
+name = None #"img" 
 model_name = "nai-diffusion-4-5-full"
-prompt = "an anthro snow leopard male posing suggestively, masterpiece, 1boy, shota, slut, femboy,tease,emo hair, dark purple hair, bangs, purple spots, cat ears, looking at viewer, cyberpunk background" 
-quality_tags_enabled = False
-negative_prompt = "female, boobs, breasts" 
+prompt = "a slender shota catboy {{{male}}} with black cat ears, glowing purple eyes, wearing a black and purple cyberpunk outfit with neon accents, {{{1boy}}}, clearn lineart, cinematic lighting, ponytail, medium length neon violet hair, blurred night city background"
+quality_tags_enabled = True
+negative_prompt = "1girl, female, boobs, breasts, text, caption, subtitles, watermark, fur" 
 uc_preset_enabled = True
 character_prompts = [] 
 
 #https://docs.novelai.net/en/image/controltools
-base_image_path = None 
-base_image_strength = 0.75   
+base_image_path = "output/zTest.png" 
+base_image_strength = .5
 base_image_noise = 0.0      
 
 #https://docs.novelai.net/en/image/vibetransfer
-vibe_transfer_image_path = None 
+vibe_transfer_image_path = "input/Ceru.png"#"input/Ceru.png" 
 vibe_transfer_information_extracted = 1.0 
-vibe_transfer_strength = 0.5             
+vibe_transfer_strength = 1
 
 #https://docs.novelai.net/en/image/precisereference
 precise_references = [
     {
-        "image_path": "input/ceru_for_vibe.png",
-        "type": "character",       
-        "strength": 1.0,  # how "hard"?
-        "fidelity": 1.0   # how much detail?
+        "image_path": None,
+        "type": "style",       
+        "strength": .8,  # how "hard"?
+        "fidelity": .8   # how much detail?
     }
 ]
 
+repeats = 4 # how many times to repeatedly send a single image request, rate limiting not tested be careful
 steps = 28 
 guidance = 5.0 
-seed = 666
+seed = 0 # Set to 0 for random seed, or any integer for reproducible results.
 sampler = "k_euler_ancestral"
 width = 832
 height = 1216
-n_samples = 1
+n_samples = 1 # number of images to generate per request (the API supports up to 4, but beware of rate limits and timeouts)
+print_payload_debug = False
+use_timestamped_output = False
 run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
 
+def default_output_prefix():
+    """Infer a default output prefix from the active input image, if any."""
+    candidate_paths = [
+        base_image_path,
+        vibe_transfer_image_path,
+    ]
+    candidate_paths.extend(
+        ref.get("image_path")
+        for ref in (precise_references or [])
+        if str(ref.get("image_path") or "").strip()
+    )
+
+    for path in candidate_paths:
+        if not path:
+            continue
+        stem = os.path.splitext(os.path.basename(path))[0]
+        if stem:
+            return stem
+    return "img"
+
 def output_filename(prefix, suffix="", ext=""):
-    """Build a timestamped output filename for sync-safe writes."""
-    filename = f"{run_timestamp}_{prefix}"
+    """Build an output filename, optionally prefixed with a run timestamp."""
+    filename = (
+        prefix
+        if isinstance(prefix, str) and prefix.strip()
+        else default_output_prefix()
+    )
+    if use_timestamped_output:
+        filename = f"{run_timestamp}_{filename}"
     if suffix:
         filename += f"_{suffix}"
     if ext:
         filename += ext
-    return os.path.join("output", filename)
+    path = os.path.join("output", filename)
+    if use_timestamped_output:
+        return path
 
-#Engine
+    if not os.path.exists(path):
+        return path
+
+    stem, extension = os.path.splitext(filename)
+    counter = 1
+    while True:
+        candidate = os.path.join("output", f"{stem}_{counter}{extension}")
+        if not os.path.exists(candidate):
+            return candidate
+        counter += 1
+
+#region Debug Helpers
 def redact_payload_for_debug(payload):
     """Redact large image/base64 fields for readable debug output."""
     def scrub(key, value):
@@ -106,37 +148,61 @@ def redact_payload_for_debug(payload):
 
     return scrub("root", payload)
 
-
 def print_reference_debug_summary():
-    """Print human-readable reference settings in strength/fidelity order."""
-    if vibe_transfer_image_path:
-        print("Vibe reference:")
-        print(
-            json.dumps(
-                {
-                    "image_path": vibe_transfer_image_path,
-                    "strength": vibe_transfer_strength,
-                    "fidelity": vibe_transfer_information_extracted,
-                },
-                indent=2,
-                ensure_ascii=True,
-            )
+    """Print active input features in a compact terminal table."""
+    rows = []
+
+    if base_image_path:
+        rows.append(
+            {
+                "feature": "i2i",
+                "path": base_image_path,
+                "param1": f"strength={base_image_strength}",
+                "param2": f"noise={base_image_noise}",
+            }
         )
 
-    if precise_references:
-        refs = []
-        for ref in precise_references:
-            refs.append(
-                {
-                    "image_path": ref.get("image_path"),
-                    "type": ref.get("type", "character"),
-                    "strength": ref.get("strength", 1.0),
-                    "fidelity": ref.get("fidelity", 1.0),
-                }
-            )
-        print("Precise references:")
-        print(json.dumps(refs, indent=2, ensure_ascii=True))
+    if vibe_transfer_image_path:
+        rows.append(
+            {
+                "feature": "vibe",
+                "path": vibe_transfer_image_path,
+                "param1": f"strength={vibe_transfer_strength}",
+                "param2": f"info={vibe_transfer_information_extracted}",
+            }
+        )
 
+    active_precise_references = [
+        ref
+        for ref in (precise_references or [])
+        if str(ref.get("image_path") or "").strip()
+    ]
+    for idx, ref in enumerate(active_precise_references):
+        rows.append(
+            {
+                "feature": f"precise[{idx}]",
+                "path": ref.get("image_path"),
+                "param1": f"type={ref.get('type', 'character')}",
+                "param2": (
+                    f"strength={ref.get('strength', 1.0)}, fidelity={ref.get('fidelity', 1.0)}"
+                ),
+            }
+        )
+
+    if not rows:
+        return
+
+    feature_width = max(len(row["feature"]) for row in rows)
+    path_width = max(len(str(row["path"])) for row in rows)
+
+    print("Inputs:")
+    for row in rows:
+        print(
+            f"  {row['feature']:<{feature_width}}  "
+            f"{str(row['path']):<{path_width}}  "
+            f"{row['param1']:<18}  "
+            f"{row['param2']}"
+        )
 
 def image_to_base64(filepath, force_png=False):
     """Helper to convert local image to base64 string for the API.
@@ -179,7 +245,6 @@ def encode_reference_image(filepath, model, information_extracted=1.0):
     print(f"  [warn] encode-vibe failed ({r.status_code}) for {filepath}: {r.text[:100]}")
     return None
 
-
 def normalize_reference_type(reference_type):
     """Map user-friendly precise types to the frontend strings."""
     value = str(reference_type or "character").strip().lower()
@@ -190,7 +255,6 @@ def normalize_reference_type(reference_type):
     print(f"  [warn] unknown precise reference type {reference_type!r}; defaulting to 'character'")
     return "character"
 
-
 def compute_secondary_strength(reference_type, strength, fidelity):
     """Mirror the frontend's secondary strength mapping for precise refs."""
     if reference_type == "character":
@@ -198,7 +262,6 @@ def compute_secondary_strength(reference_type, strength, fidelity):
     if reference_type == "style":
         return 1.0 - fidelity
     return 1.0 - fidelity
-
 
 def build_director_reference_image(filepath):
     """Build the GUI-style inline cached image object for precise refs."""
@@ -229,7 +292,6 @@ def build_director_reference_image(filepath):
         "cache_secret_key": cache_secret_key,
         "data": png_b64,
     }
-
 
 def export_director_reference_debug(parameters):
     """Write precise-reference debug artifacts for comparison against HAR data."""
@@ -264,7 +326,6 @@ def export_director_reference_debug(parameters):
     with open(debug_path, "w", encoding="utf-8") as handle:
         json.dump(manifest, handle, indent=2, ensure_ascii=True)
     print(f"Director reference debug written: {debug_path}")
-
 
 def normalize_payload_for_diff(payload):
     """Collapse unstable/huge fields into diff-friendly summaries."""
@@ -311,7 +372,6 @@ def normalize_payload_for_diff(payload):
 
     return payload_copy
 
-
 def export_payload_debug(payload):
     """Write raw and normalized payload JSON for side-by-side GUI diffing."""
     os.makedirs("output", exist_ok=True)
@@ -326,6 +386,9 @@ def export_payload_debug(payload):
     print(f"Payload debug written: {raw_path}")
     print(f"Payload debug written: {normalized_path}")
 
+#endregion
+
+#region Engine 
 def construct_payload():
     """Builds the JSON payload imitating the NovelAI frontend logic."""
     import random
@@ -418,14 +481,19 @@ def construct_payload():
     # 3. Inject Precise Reference (Character/Style Reference) logic
     # Uses the multi-reference arrays, same underlying API as Vibe Transfer but
     # interpreted differently by the V4/V4.5 model for higher-fidelity matching.
-    if precise_references:
+    active_precise_references = [
+        ref
+        for ref in (precise_references or [])
+        if str(ref.get("image_path") or "").strip()
+    ]
+    if active_precise_references:
         ref_info_extracted = []
         ref_strengths = []
         director_reference_descriptions = []
         director_reference_secondary_strengths = []
         director_reference_images_cached = []
         failed_precise_paths = []
-        for ref in precise_references:
+        for ref in active_precise_references:
             image_path = ref.get("image_path")
             print(f"  Preparing reference: {image_path}...")
             reference_type = normalize_reference_type(ref.get("type", "character"))
@@ -468,87 +536,58 @@ def construct_payload():
     return payload
 
 def run_gui_emulation():
-    print("Preparing payload...")
-    print_reference_debug_summary()
-    payload = construct_payload()
-    # Disabled by default now that payload parity work is mostly complete.
-    # export_payload_debug(payload)
-    # export_director_reference_debug(payload["parameters"])
-    print("Full payload:")
-    print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
     os.makedirs("output", exist_ok=True)
-    
     headers = {
         "Authorization": f"Bearer {NOVELAI_API_KEY}",
         "Content-Type": "application/json"
     }
 
-    print("Sending generation request to NovelAI API...")
-    try:
-        response = requests.post(NOVELAI_API_URL, headers=headers, json=payload, timeout=180)
-    except requests.RequestException as exc:
-        raise RuntimeError(f"NovelAI request failed: {exc}") from exc
+    total_repeats = max(1, int(repeats))
+    all_saved_paths = []
 
-    if response.status_code == 200:
-        print("Success! Unpacking zip file...")
-        saved_paths = []
+    for repeat_index in range(total_repeats):
+        progress = f"[{repeat_index + 1}/{total_repeats}]"
+        print(f"{progress} Preparing payload...")
+        print_reference_debug_summary()
+        payload = construct_payload()
+        # Disabled by default now that payload parity work is mostly complete.
+        # export_payload_debug(payload)
+        # export_director_reference_debug(payload["parameters"])
+        if print_payload_debug:
+            print(f"{progress} Full payload:")
+            print(json.dumps(redact_payload_for_debug(payload), indent=2, ensure_ascii=True))
+
+        print(f"{progress} Sending generation request to NovelAI API...")
+        try:
+            response = requests.post(
+                NOVELAI_API_URL, headers=headers, json=payload, timeout=180
+            )
+        except requests.RequestException as exc:
+            raise RuntimeError(f"NovelAI request failed: {exc}") from exc
+
+        if response.status_code != 200:
+            detail = response.text.strip()
+            if len(detail) > 400:
+                detail = detail[:400] + "..."
+            raise RuntimeError(
+                f"NovelAI API returned {response.status_code}: {detail}"
+            )
+
+        print(f"{progress} Success! Unpacking zip file...")
         with zipfile.ZipFile(BytesIO(response.content)) as z:
             for idx, filename in enumerate(z.namelist()):
-                output_path = output_filename(name, str(idx), ".png")
+                suffix = str(idx) if len(z.namelist()) > 1 else ""
+                output_path = output_filename(name, suffix, ".png")
                 with open(output_path, "wb") as f:
                     f.write(z.read(filename))
-                print(f"-> Saved: {output_path}")
-                saved_paths.append(output_path)
-        return saved_paths
-    else:
-        detail = response.text.strip()
-        if len(detail) > 400:
-            detail = detail[:400] + "..."
-        raise RuntimeError(f"NovelAI API returned {response.status_code}: {detail}")
+                print(f"{progress} -> Saved: {output_path}")
+                all_saved_paths.append(output_path)
 
-def run_upscale(image_filepath, scale_factor=2):
-    print(f"Preparing upscale payload for {image_filepath} at {scale_factor}x...")
-    from PIL import Image
-    os.makedirs("output", exist_ok=True)
-    try:
-        with Image.open(image_filepath) as img:
-            w, h = img.size
-    except Exception as e:
-        print(f"Error opening image: {e}")
-        return
+        print(f"{progress} Repeat complete.")
 
-    b64_img = image_to_base64(image_filepath)
-    if not b64_img:
-        print("Failed to encode image to base64.")
-        return
+    return all_saved_paths
 
-    payload = {
-        "image": b64_img,
-        "width": w,
-        "height": h,
-        "scale": scale_factor
-    }
-    
-    headers = {
-        "Authorization": f"Bearer {NOVELAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    url = "https://image.novelai.net/ai/upscale"
-    print("Sending upscale request to NovelAI API...")
-    response = requests.post(url, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        print("Success! Unpacking zip file...")
-        with zipfile.ZipFile(BytesIO(response.content)) as z:
-            for idx, filename in enumerate(z.namelist()):
-                output_path = output_filename("upscale", str(idx), ".png")
-                with open(output_path, "wb") as f:
-                    f.write(z.read(filename))
-                print(f"-> Saved: {output_path}")
-    else:
-        print(f"Error {response.status_code}: {response.text}")
-
+#endregion
 if __name__ == "__main__":
     try:
         run_gui_emulation()
