@@ -1,12 +1,44 @@
 import argparse
 import sys
-import os
 import re
 import json
 
 # Import the existing novelai module
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 import nai
+
+CLI_DEFAULTS = {
+    "name": None,
+    "prompt": "",
+    "negative_prompt": "",
+    "model_name": "nai-diffusion-4-5-full",
+    "seed": 0,
+    "steps": 28,
+    "guidance": 5.0,
+    "sampler": "k_euler_ancestral",
+    "width": 832,
+    "height": 1216,
+    "n_samples": 1,
+    "repeats": 1,
+    "character_prompts": [],
+    "quality_tags_enabled": False,
+    "uc_preset_enabled": True,
+    "base_image_path": None,
+    "base_image_strength": 0.75,
+    "base_image_noise": 0.0,
+    "vibe_transfer_image_path": None,
+    "vibe_transfer_information_extracted": 1.0,
+    "vibe_transfer_strength": 0.5,
+    "precise_references": [],
+    "print_payload_debug": False,
+    "use_timestamped_output": False,
+}
+
+
+def apply_cli_defaults():
+    """Reset nai.py globals so CLI runs do not inherit scratchpad state."""
+    for attr, value in CLI_DEFAULTS.items():
+        setattr(nai, attr, list(value) if isinstance(value, list) else value)
+
 
 def parse_precise_ref(ref_str):
     """Parse precise ref safely on Windows.
@@ -98,6 +130,11 @@ def main():
     parser.add_argument("-H", "--height", type=int, help="Height of the generated image.")
     parser.add_argument("--samples", type=int, help="Number of images to generate.")
     parser.add_argument(
+        "--repeats",
+        type=int,
+        help="Number of sequential single-image requests to send.",
+    )
+    parser.add_argument(
         "--character-prompt",
         action="append",
         help="Extra character prompt fragment to append. Can be used multiple times.",
@@ -153,6 +190,7 @@ def main():
     # parser.add_argument("--upscale-factor", type=int, choices=[2, 4], default=2, help="Upscale factor (2 or 4). Default is 2.")
     
     args = parser.parse_args()
+    apply_cli_defaults()
 
     parsed_precise_refs = normalize_precise_refs(args.precise_ref)
     i2i_mode = args.i2i_image is not None
@@ -165,7 +203,7 @@ def main():
     if vibe_mode and precise_mode:
         parser.error("Invalid combination: vibe (--vibe-image) and precise (--precise-ref) cannot be used together.")
     
-    # Override novelai.py globals with any provided CLI arguments
+    # Override the CLI baseline with any provided arguments.
     if args.name is not None:
         nai.name = args.name
     if args.prompt is not None:
@@ -188,6 +226,8 @@ def main():
         nai.height = args.height
     if args.samples is not None:
         nai.n_samples = args.samples
+    if args.repeats is not None:
+        nai.repeats = args.repeats
     if args.character_prompt is not None:
         nai.character_prompts = args.character_prompt
     if args.quality_tags_enabled is not None:
@@ -195,10 +235,6 @@ def main():
     if args.uc_preset_enabled is not None:
         nai.uc_preset_enabled = args.uc_preset_enabled
 
-    # Default to no precise references unless explicitly provided via CLI.
-    # This avoids implicit mode mixing from nai.py defaults.
-    nai.precise_references = []
-        
     # i2i overrides
     if args.i2i_image is not None:
         nai.base_image_path = args.i2i_image

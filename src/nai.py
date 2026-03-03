@@ -8,6 +8,8 @@ import zipfile
 from datetime import datetime
 from io import BytesIO
 from dotenv import load_dotenv
+from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 
 load_dotenv()
@@ -26,12 +28,12 @@ character_prompts = []
 
 #https://docs.novelai.net/en/image/controltools
 base_image_path = "output/zTest.png" 
-base_image_strength = .5
-base_image_noise = 0.0      
+base_image_strength = 0.01                        #low = preserve, high = draw more freely
+base_image_noise = 0     
 
 #https://docs.novelai.net/en/image/vibetransfer
-vibe_transfer_image_path = "input/Ceru.png"#"input/Ceru.png" 
-vibe_transfer_information_extracted = 1.0 
+vibe_transfer_image_path = None #"input/Ceru.png"#"input/Ceru.png" 
+vibe_transfer_information_extracted = 1.0           #
 vibe_transfer_strength = 1
 
 #https://docs.novelai.net/en/image/precisereference
@@ -104,6 +106,47 @@ def output_filename(prefix, suffix="", ext=""):
         if not os.path.exists(candidate):
             return candidate
         counter += 1
+
+
+def current_local_metadata():
+    """Build minimal human-readable local provenance metadata for saved PNGs."""
+    active_precise_images = [
+        ref.get("image_path")
+        for ref in (precise_references or [])
+        if str(ref.get("image_path") or "").strip()
+    ]
+    return {
+        "saved_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "base_image": base_image_path,
+        "vibe_image": vibe_transfer_image_path,
+        "precise_images": active_precise_images,
+    }
+
+
+def augment_png_metadata(image_path):
+    """Append local debug provenance to the saved PNG without affecting generation."""
+    local_meta = current_local_metadata()
+
+    with Image.open(image_path) as img:
+        pnginfo = PngInfo()
+
+        for key, value in img.info.items():
+            if key == "Comment" and isinstance(value, str):
+                try:
+                    comment_obj = json.loads(value)
+                except json.JSONDecodeError:
+                    comment_obj = {"original_comment": value}
+                comment_obj["local_debug"] = local_meta
+                pnginfo.add_text("Comment", json.dumps(comment_obj, ensure_ascii=True))
+            elif isinstance(value, bytes):
+                pnginfo.add_text(str(key), value.decode("utf-8", errors="replace"))
+            else:
+                pnginfo.add_text(str(key), str(value))
+
+        if "Comment" not in img.info:
+            pnginfo.add_text("Comment", json.dumps({"local_debug": local_meta}, ensure_ascii=True))
+
+        img.save(image_path, pnginfo=pnginfo)
 
 #region Debug Helpers
 def redact_payload_for_debug(payload):
@@ -580,6 +623,7 @@ def run_gui_emulation():
                 output_path = output_filename(name, suffix, ".png")
                 with open(output_path, "wb") as f:
                     f.write(z.read(filename))
+                augment_png_metadata(output_path)
                 print(f"{progress} -> Saved: {output_path}")
                 all_saved_paths.append(output_path)
 
